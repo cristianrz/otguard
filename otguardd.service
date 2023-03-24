@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/otguard/bin/otguardd
+ExecStart=/usr/local/otguard/bin/otguardd -u 999 -g 999
 Restart=always
 RestartSec=5s
 

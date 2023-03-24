@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"os/user"
 	"strconv"
 
 	"path/filepath"
@@ -17,6 +18,11 @@ import (
 var ports = []int{80, 443}
 
 func main() {
+	err := prepareLogFile()
+	if err != nil {
+		panic(err)
+	}
+
 	uidPtr := flag.Int("u", 0, "uid for otguard-web process")
 	gidPtr := flag.Int("g", 0, "gid for otguard-web process")
 	portPtr := flag.Int("p", 8443, "listen port")
@@ -143,4 +149,41 @@ func addFirewallRules(ip string) (bool, error) {
 func isValidIP(ip string) bool {
 	parsedIP := net.ParseIP(ip)
 	return parsedIP != nil && !parsedIP.IsUnspecified()
+}
+
+func prepareLogFile() error {
+	// Get the otguard user
+	otguardUser, err := user.Lookup("otguard")
+	if err != nil {
+		return err
+	}
+
+	// Create the log file
+	logFile, err := os.Create("/var/log/otguard-web.log")
+	if err != nil {
+		return err
+	}
+	defer logFile.Close()
+
+	// Set the file permissions and owner
+	err = os.Chmod("/var/log/otguard-web.log", 0644)
+	if err != nil {
+		return err
+	}
+
+	uid, err := strconv.Atoi(otguardUser.Uid)
+	if err != nil {
+		return err
+	}
+	gid, err := strconv.Atoi(otguardUser.Gid)
+	if err != nil {
+		return err
+	}
+
+	err = os.Chown("/var/log/otguard-web.log", uid, gid)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

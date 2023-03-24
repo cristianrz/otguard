@@ -1,0 +1,110 @@
+#!/bin/sh
+set -eu
+
+if [ ! -f ./cert.pem ]; then
+	cat << EOF
+I couldn't find an SSL certificate in the current directory (cert.pem and key.pem).
+EOF
+	printf 'Do you want me to generate one for you? [y] '
+	read -r ans
+	case "$ans" in
+		n*|N*)
+			echo "Place cert.pem and key.pem in this directory and run $0 again"
+			exit 1
+			;;
+		*) 
+			set -x
+			./scripts/otguard-mkcert
+			set +x
+			;;
+	esac
+fi
+
+
+if [ ! -f secrets ]; then
+	cat << EOF
+I couldn't find a secrets file in the current directory.
+EOF
+	printf 'Do you want me to generate one for you? [y] '
+	read -r ans
+	case "$ans" in
+		n*|N*) echo "Place \"secrets\" in this directory and run $0 again"
+			exit 1
+			;;
+		*) 
+			set -x
+			./scripts/otguard-mksecret
+			set +x
+			;;
+	esac
+fi
+
+if ! grep -q otguard /etc/passwd; then
+	cat << EOF
+I couldn't find an otguard user in /etc/passwd.
+EOF
+printf 'Do you want me to create it for you? [y] '
+	read -r ans
+	case "$ans" in
+		n*|N*) echo "Create an otguard user and run $0 again"
+			exit 1 ;;
+		*) 
+
+			set -x
+			useradd -U -d /nonexistent -s "$(command -v nologin)" -r otguard
+			set +x
+			;;
+	esac
+fi
+
+#printf 'Where do you want to install otguard? [/usr/local/otguard] '
+#read -r ans
+
+PREFIX="${ans:-/usr/local/otguard}"
+
+uid="$(id -u otguard)"
+gid="$(id -g otguard)"
+
+set -x
+sed -i.bkp "s/^ExecStart.*/ExecStart=\/usr\/local\/otguard\/bin\/otguardd -u $uid -g $gid/g" otguardd.service
+set +x
+
+OTGUARD_DIR="/usr/local/otguard"
+SYSTEMD_DIR="/usr/local/lib/systemd/system"
+CRON_DIR="/etc/cron.d"
+
+set -x
+mkdir   -m 0755 -p "$SYSTEMD_DIR"
+install -D -m 0644 -o root -g root build"${SYSTEMD_DIR}"/otguardd.service         "${SYSTEMD_DIR}"/otguardd.service
+
+mkdir   -m 0755 -p "$OTGUARD_DIR"
+install -D -m 0644 -o root -g root build"${OTGUARD_DIR}"/share/otguard/login.html "${OTGUARD_DIR}"/share/otguard/login.html
+install -D -m 0755 -o root -g root build"${CRON_DIR}"/otguard-cron                "${CRON_DIR}"/otguard-cron
+install -D -m 0755 -o root -g root build"${OTGUARD_DIR}"/bin/otguard-mksecret     "${OTGUARD_DIR}"/bin/otguard-mksecret
+install -D -m 0755 -o root -g root build"${OTGUARD_DIR}"/bin/otguard-purgerules   "${OTGUARD_DIR}"/bin/otguard-purgerules
+install -D -m 0755 -o root -g root build"${OTGUARD_DIR}"/bin/otguard-web          "${OTGUARD_DIR}"/bin/otguard-web
+install -D -m 0755 -o root -g root build"${OTGUARD_DIR}"/bin/otguardd             "${OTGUARD_DIR}"/bin/otguardd
+set +x
+
+ETC_DIR="/etc/otguard"
+set -x
+mkdir   -m 0640 -p      "${ETC_DIR}"
+chown   otguard:otguard "${ETC_DIR}"
+install -m 0640 -o otguard -g otguard key.pem      "${ETC_DIR}"/key.pem
+install -m 0640 -o otguard -g otguard cert.pem     "${ETC_DIR}"/cert.pem
+install -m 0640 -o otguard -g otguard secrets      "${ETC_DIR}"/secrets
+
+systemctl daemon-reload
+set +x
+
+printf 'Install finished. Do you want to start the otguardd service? [y] '
+read -r ans
+case "$ans" in
+	n*|N*) exit 0 ;;
+	*)
+		set -x
+		systemctl start otguardd.service
+		set +x
+		;;
+esac
+

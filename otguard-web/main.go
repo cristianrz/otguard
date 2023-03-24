@@ -21,6 +21,15 @@ var successMsg *string
 var failMsg *string
 
 func main() {
+
+	f, err := os.OpenFile("/var/log/otguard-web.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0640)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+
 	portPtr := flag.Int("p", 8443, "listen port")
 	successMsg = flag.String("s", "You are now logged in", "message on auth success")
 	failMsg = flag.String("f", "Incorrect username or OTP", "message on auth failure")
@@ -34,23 +43,45 @@ func main() {
 
 	here := filepath.Dir(this)
 
-	secrets, err = readSecretsFile(here + "/../etc/otguard/secrets")
+	secrets, err = readSecretsFile(here + "/../../../../etc/otguard/secrets")
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	http.HandleFunc("/", handleAccess)
 
-	err = http.ListenAndServeTLS(":"+strconv.Itoa(*portPtr), here+"/../etc/otguard/cert.pem", here+"/../etc/otguard/key.pem", nil)
+	cert := here + "/../../../../etc/otguard/cert.pem"
+	if _, err := os.Stat(cert); os.IsNotExist(err) {
+		log.Fatalln(err)
+	}
+
+	key := here + "/../../../../etc/otguard/key.pem"
+	if _, err := os.Stat(key); os.IsNotExist(err) {
+		log.Fatalln(err)
+	}
+
+	err = http.ListenAndServeTLS(":"+strconv.Itoa(*portPtr), cert, key, nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
 }
 
 func handleAccess(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("login.html")
+	this, err := os.Executable()
 	if err != nil {
-		log.Println("failed parsing template")
+		log.Fatalln(err)
+	}
+
+	here := filepath.Dir(this)
+
+	login := here + "/../share/otguard/login.html"
+	if _, err := os.Stat(login); os.IsNotExist(err) {
+		log.Fatalln(err)
+	}
+
+	tmpl, err := template.ParseFiles(login)
+	if err != nil {
+		log.Fatalln("failed parsing template")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 

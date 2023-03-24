@@ -1,0 +1,2 @@
+0 6 * * * root /usr/local/otguard/bin/otguard-purgerules
+
