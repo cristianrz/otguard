@@ -1,4 +1,4 @@
 #!/bin/sh
 iptables -S |
-	awk '/keytoaccess/ { gsub(/^-A/, "iptables -D"); print }' |
+	awk '/otguard/ { gsub(/^-A/, "iptables -D"); print }' |
 	bash

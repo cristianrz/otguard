@@ -1,19 +1,33 @@
-all: bin bin/keytoaccess-server bin/keytoaccess-manager bin/keytoaccess-mkkey bin/keytoaccess-purgerules
+all: build build/bin/otguard-server build/bin/otguard-manager build/bin/otguard-mkkey build/bin/otguard-purgerules build/usr/share/otguard/login.html build/etc/otguard/cert.pem build/etc/otguard/key.pem build/etc/otguard/secrets
 	
-bin:
-	mkdir -p bin/
+build:
+	mkdir -p build/bin/
+	mkdir -p build/usr/share/otguard/
+	mkdir -p build/etc/otguard/
 
-bin/keytoaccess-server:
-	go build -o bin/keytoaccess-server keytoaccess-server/main.go
+build/bin/otguard-server: otguard-server/main.go
+	go build -o build/bin/otguard-server otguard-server/main.go
 
-bin/keytoaccess-manager:
-	go build -o bin/keytoaccess-manager keytoaccess-manager/main.go
+build/bin/otguard-manager: otguard-manager/main.go
+	go build -o build/bin/otguard-manager otguard-manager/main.go
 
-bin/keytoaccess-mkkey:
-	go build -o bin/keytoaccess-mkkey keytoaccess-mkkey/main.go
+build/bin/otguard-mkkey: otguard-mkkey/main.go
+	go build -o build/bin/otguard-mkkey otguard-mkkey/main.go
 
-bin/keytoaccess-purgerules:
-	cp scripts/keytoaccess-purgerules bin/
+build/bin/otguard-purgerules: scripts/otguard-purgerules
+	cp scripts/otguard-purgerules build/bin/
+
+build/usr/share/otguard/login.html: login.html
+	cp login.html build/usr/share/otguard/login.html
+
+build/etc/otguard/cert.pem:
+	cp cert.pem build/etc/otguard/
+
+build/etc/otguard/key.pem:
+	cp key.pem build/etc/otguard/
+
+build/etc/otguard/secrets:
+	cp secrets build/etc/otguard/
 
 clean:
-	rm -rf ./bin
+	rm -rf ./build
