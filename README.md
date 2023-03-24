@@ -1,4 +1,4 @@
-# 🛡️OTGuard
+# 🛡️ OTGuard
 
 OTGuard is a tool for providing two-factor authentication with zero configuration on services that have single-factor authentication and do not integrate with any 2FA solution. It is not meant to be used in isolation but is intended to be part of a defense in depth strategy where applications listening on the ports have their own authentication. OTGuard aims to provide a small attack surface with only ~ 200 lines of code and uses privilege separation.
 
