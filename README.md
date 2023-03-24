@@ -28,6 +28,10 @@ OTGuard is inspired by solutions like port knocking or Fwknop but unlike port
 knocking, passwords are not sent in the clear, and unlike Fwknop, it provides
 OTP codes so that passwords cannot be reused.
 
+## Disclaimer
+
+OTGuard is currently on alpha. Take your time to understand its intended use and do not use it on production systems for now unless you are keen to go through all the code and ensure it meets your security requirements.
+
 ## Install
 
 To install: download and extract  the tarball. Then run the install command which will guide you through the installation.
@@ -74,10 +78,26 @@ The install process will create a certificate and a TOTP secret for you.
 
 - Now if you go back to `https://your.website` you should have access to it.
 
-Rules are purged daily. A cron file is installed in `/etc/cron.d` that does it. Feel free to amend as necessary. Rules can also be purged manually with
+- If you check `iptables` you can see what rules OTGuard created:
+
+```
+# iptables -S | grep otguard
+-A INPUT -s 10.10.10.1/32 -p tcp -m tcp --dport 80 -m comment --comment otguard -j ACCEPT
+-A INPUT -s 10.10.10.1/32 -p tcp -m tcp --dport 443 -m comment --comment otguard -j ACCEPT
+```
+
+- Rules are purged daily. A cron file is installed in `/etc/cron.d` that does it. Feel free to amend as necessary. Rules can also be purged manually with
 
 ```
 # /usr/local/otguard/bin/otguard-purgerules
+```
+
+- If you check again there should be no otguard rules:
+
+```
+# iptables -S | grep otguard
+-A INPUT -s 10.10.10.1/32 -p tcp -m tcp --dport 80 -m comment --comment otguard -j ACCEPT
+-A INPUT -s 10.10.10.1/32 -p tcp -m tcp --dport 443 -m comment --comment otguard -j ACCEPT
 ```
 
 ## Configuration
