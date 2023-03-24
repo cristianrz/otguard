@@ -17,8 +17,8 @@ import (
 var ports = []int{80, 443}
 
 func main() {
-	uidPtr := flag.Int("u", 0, "uid for otguard-server process")
-	gidPtr := flag.Int("g", 0, "gid for otguard-server process")
+	uidPtr := flag.Int("u", 0, "uid for otguard-web process")
+	gidPtr := flag.Int("g", 0, "gid for otguard-web process")
 	portPtr := flag.Int("p", 8443, "listen port")
 	successMsg := flag.String("s", "You are now logged in", "message on auth success")
 	failMsg := flag.String("f", "Incorrect username or OTP", "message on auth failure")
@@ -36,12 +36,12 @@ func main() {
 		log.Fatalln("Refusing to run with uid or guid 0")
 	}
 
-	// Set up the command to run otguard-server as the "otguard" user.
-	cmd := exec.Command(here+"/otguard-server", "-p", strconv.Itoa(*portPtr), "-s", *successMsg, "-f", *failMsg)
+	// Set up the command to run otguard-web as the "otguard" user.
+	cmd := exec.Command(here+"/otguard-web", "-p", strconv.Itoa(*portPtr), "-s", *successMsg, "-f", *failMsg)
 	cmd.SysProcAttr = &syscall.SysProcAttr{}
 	cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(*uidPtr), Gid: uint32(*gidPtr)}
 
-	// Start the otguard-server process.
+	// Start the otguard-web process.
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error creating stdout pipe:", err)
@@ -55,12 +55,12 @@ func main() {
 	}
 
 	if err := cmd.Start(); err != nil {
-		log.Fatalln("Error starting otguard-server: ", err)
+		log.Fatalln("Error starting otguard-web: ", err)
 	}
 
 	defer syscall.Kill(cmd.Process.Pid, syscall.SIGHUP)
 
-	log.Println("Started otguard-server")
+	log.Println("Started otguard-web")
 
 	// Read the server's stdout and add firewall rules.
 	scanner := bufio.NewScanner(stdout)
@@ -112,9 +112,9 @@ func main() {
 		log.Fatalln("Error scanning server stdout:", err)
 	}
 
-	// Wait for the otguard-server process to exit.
+	// Wait for the otguard-web process to exit.
 	if err := cmd.Wait(); err != nil {
-		log.Fatalln("Error waiting for otguard-server:", err)
+		log.Fatalln("Error waiting for otguard-web:", err)
 	}
 }
 
@@ -130,7 +130,7 @@ func addFirewallRules(ip string) (bool, error) {
 
 	for _, port := range ports {
 		// Run the iptables command to add the rules.
-		cmd = exec.Command("iptables", "-A", "INPUT", "-s", ip, "-p", "tcp", "--dport", strconv.Itoa(port), "-j", "ACCEPT", "-m", "comment", "--comment", "otguard")
+		cmd = exec.Command("iptables", "-I", "INPUT", "-s", ip, "-p", "tcp", "--dport", strconv.Itoa(port), "-j", "ACCEPT", "-m", "comment", "--comment", "otguard")
 		if err := cmd.Run(); err != nil {
 			return false, fmt.Errorf("failed to add port %v rule: %v", port, err)
 		}

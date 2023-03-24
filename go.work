@@ -1,6 +1,6 @@
 go 1.18
 
 use (
-	./otguard-manager
-	./otguard-server
+	./otguardd
+	./otguard-web
 )

@@ -81,6 +81,9 @@ func handleAccess(w http.ResponseWriter, r *http.Request) {
 
 		userSecret, ok := secrets[username]
 		if ok {
+			// if userSecret == "JBSWY3DPEHPK3PXP" {
+			// 	log.Fatalln("Refusing to use default secret, please edit etc/otguard/secrets")
+			// }
 			valid = totp.Validate(otp, userSecret)
 		}
 

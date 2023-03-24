@@ -1,4 +1,4 @@
-module github.com/cristianrz/otguard/otguard-server
+module github.com/cristianrz/otguard/otguard-web
 
 go 1.18
 

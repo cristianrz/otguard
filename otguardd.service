@@ -1,0 +1,12 @@
+[Unit]
+Description=OTGuard Daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/otguard/bin/otguardd
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
