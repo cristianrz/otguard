@@ -96,7 +96,6 @@ The install process will create a certificate and a TOTP secret for you.
 
 ```
 # iptables -S | grep otguard
-
 ```
 
 ## Configuration

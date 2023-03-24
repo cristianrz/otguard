@@ -15,7 +15,7 @@ import (
 	"syscall"
 )
 
-var ports = []int{80, 443}
+var ports = []int{22, 80, 443}
 
 func main() {
 	err := prepareLogFile()

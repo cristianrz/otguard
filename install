@@ -65,13 +65,13 @@ PREFIX="${ans:-/usr/local/otguard}"
 uid="$(id -u otguard)"
 gid="$(id -g otguard)"
 
-set -x
-sed -i.bkp "s/^ExecStart.*/ExecStart=\/usr\/local\/otguard\/bin\/otguardd -u $uid -g $gid/g" otguardd.service
-set +x
-
-OTGUARD_DIR="/usr/local/otguard"
+OTGUARD_DIR="$PREFIX"
 SYSTEMD_DIR="/usr/local/lib/systemd/system"
 CRON_DIR="/etc/cron.d"
+
+set -x
+sed -i.bkp "s/^ExecStart.*/ExecStart=\/usr\/local\/otguard\/bin\/otguardd -u $uid -g $gid/g" build"${SYSTEMD_DIR}"/otguardd.service
+set +x
 
 set -x
 mkdir   -m 0755 -p "$SYSTEMD_DIR"
@@ -88,7 +88,7 @@ set +x
 
 ETC_DIR="/etc/otguard"
 set -x
-mkdir   -m 0640 -p      "${ETC_DIR}"
+mkdir   -m 0750 -p      "${ETC_DIR}"
 chown   otguard:otguard "${ETC_DIR}"
 install -m 0640 -o otguard -g otguard key.pem      "${ETC_DIR}"/key.pem
 install -m 0640 -o otguard -g otguard cert.pem     "${ETC_DIR}"/cert.pem
