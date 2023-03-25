@@ -16,12 +16,14 @@ import (
 	"github.com/pquerna/otp/totp"
 )
 
-var secrets = map[string]string{}
-var successMsg *string
-var failMsg *string
+var (
+	secrets    = map[string]string{}
+	successMsg *string
+	failMsg    *string
+	// failures   = 0
+)
 
 func main() {
-
 	f, err := os.OpenFile("/var/log/otguard-web.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0640)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
@@ -95,6 +97,17 @@ func handleAccess(w http.ResponseWriter, r *http.Request) {
 		<input type="submit" value="Login">`,
 	}
 
+	// Not for now
+	// if failures > 3 {
+	// 	data.Body = "Too many requests"
+	// 	err := tmpl.Execute(w, data)
+	// 	if err != nil {
+	// 		log.Println("failed to execute template")
+	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	}
+	// 	return
+	// }
+
 	switch r.Method {
 	case "GET":
 		err := tmpl.Execute(w, data)
@@ -119,6 +132,7 @@ func handleAccess(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if !valid {
+			// failures++
 			log.Printf("Access denied for user '%s' and OTP '%s'\n", username, otp)
 			// If the password is incorrect, send an error response
 			data.Body = "<p class=\"error\">" + *failMsg + "</p>" + data.Body
@@ -132,6 +146,7 @@ func handleAccess(w http.ResponseWriter, r *http.Request) {
 		// Get the IP address of the client
 		remoteAddr, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
+			// failures++
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			log.Printf("Error getting IP address: %v", err)
 			return
@@ -139,6 +154,7 @@ func handleAccess(w http.ResponseWriter, r *http.Request) {
 
 		// Check if the IP address is valid
 		if net.ParseIP(remoteAddr) == nil {
+			// failures++
 			http.Error(w, "Invalid IP address", http.StatusBadRequest)
 			log.Printf("Invalid IP address: %s", remoteAddr)
 			return
