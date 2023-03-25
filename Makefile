@@ -38,6 +38,7 @@ $(CRON_DIR)/otguard-cron: otguard-cron
 
 clean:
 	rm -rf $(BUILD_DIR)
+	rm -f ./*tgz
 
 dist:
 	tar -czvf otguard-$(VERSION).tgz build/ README.md LICENSE.md install scripts/
