@@ -62,7 +62,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	err = http.ListenAndServeTLS(":"+strconv.Itoa(*portPtr), cert, key, nil)
+	err = http.ListenAndServe(":"+strconv.Itoa(*portPtr), nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -144,13 +144,7 @@ func handleAccess(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Get the IP address of the client
-		remoteAddr, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			// failures++
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			log.Printf("Error getting IP address: %v", err)
-			return
-		}
+		remoteAddr := r.Header.Get("X-Real-IP")
 
 		// Check if the IP address is valid
 		if net.ParseIP(remoteAddr) == nil {
